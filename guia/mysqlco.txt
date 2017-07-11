@@ -1,0 +1,5 @@
+
+
+mysql -u root -p
+
+GRANT ALL PRIVILEGES ON WSO2CARBON_DB.* TO root@'10.134.4.122' identified by 'root' with grant option;

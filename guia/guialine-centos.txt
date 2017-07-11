@@ -1,0 +1,472 @@
+
+CLUSTER:
+
+Host:
+
+Establecer en hosts de cada nodo
+
+	root#> nano /etc/hosts
+		127.0.0.1      localhost
+		10.0.200.34    srv-is-mgr-qa-01
+		10.0.200.33    srv-is-qa-01
+		10.0.200.34    svn.org
+		10.0.200.34    is.mgmt.org
+***********************************************************************************	
+MYSQL
+***********************************************************************************	
+Databases
+	REGISTRY_LOCAL_DB_121
+	REGISTRY_LOCAL_DB_122
+	SHARED_USER_DB_IS
+	SHARED_REGISTRY_DB_IS
+
+Mysql:
+	nano /etc/my.cnf
+		bind-address = 0.0.0.0
+		
+	sudo /etc/init.d/mysqld restart
+
+	mysql -u root -p
+		
+		create database REGISTRY_LOCAL_DB_121;	
+		create database REGISTRY_LOCAL_DB_122;
+		create database SHARED_USER_DB_IS;
+		create database SHARED_REGISTRY_DB_IS;
+	
+		GRANT ALL PRIVILEGES ON REGISTRY_LOCAL_DB_121.* TO root@'%' with grant option;
+		GRANT ALL PRIVILEGES ON REGISTRY_LOCAL_DB_122.* TO root@'%' with grant option;
+		GRANT ALL PRIVILEGES ON SHARED_USER_DB_IS.* TO root@'%' with grant option;
+		GRANT ALL PRIVILEGES ON SHARED_REGISTRY_DB_IS.* TO root@'%' with grant option;
+		
+		GRANT ALL PRIVILEGES ON REGISTRY_LOCAL_DB_122.* TO root@'10.134.4.122' identified by 'credisql' with grant option;		
+		GRANT ALL PRIVILEGES ON SHARED_USER_DB_IS.* TO root@'10.134.4.122' identified by 'credisql' with grant option;
+		GRANT ALL PRIVILEGES ON SHARED_REGISTRY_DB_IS.* TO root@'10.134.4.122' identified by 'credisql' with grant option;
+	
+		flush privileges;
+	
+		use mysql;
+	
+		select user,password,host from user;
+
+		exit
+
+***********************************************************************************	
+	install SVN
+***********************************************************************************
+
+	sudo mkdir /opt/svn
+	sudo mkdir /opt/svn/repos
+	
+	sudo yum install subversion
+	sudo yum install mod_dav_svn
+	sudo svn --version
+		svn, version 1.6.11 (r934486)
+	
+	sudo yum install httpd
+	
+	sudo svnadmin create /opt/svn/repos/DepSyncRep
+	sudo chown -R apache:apache /opt/svn/repos/DepSyncRep
+
+	root:#> sudo htpasswd -cm /etc/svnpasswd wso2svn
+	password: wso2svn
+		
+	root:#> sudo htpasswd -m /etc/svnpasswd ismng01
+	password: svnIsmng01
+
+	root:#> sudo htpasswd -m /etc/svnpasswd isnode01
+	password: svnIswrk01
+		
+	root:#> cat /etc/svnpasswd
+	
+	<Location /svn>
+			  DAV svn
+			  SVNParentPath /svn/repos/
+			  AuthType Basic
+			  AuthName "WSO2 repo"
+			 AuthUserFile /etc/svnpasswd
+			  Require valid-user
+	 </Location>
+
+	
+	Acceder al repositorio
+		https://10.0.200.27/svn/DepSyncRep/
+		
+	Restart Apache
+		root:#> sudo service apache2 reload
+	
+	ver Logs
+	root:#> sudo nano /var/log/apache2/error.log
+
+	root:#> sudo service apache2 start
+	root:#> sudo service apache2 restart
+
+***********************************************************************************
+	config SVN
+***********************************************************************************
+
+	Agregar el jar svnkit-all-1.8.7.wso2v1.jar en el directorio WSO2_MANAGER_HOME/repository/components/dropins/
+	Agregar el jar trilead-ssh2-1.0.0-build215.jar en el directorio WSO2_MANAGER_HOME/repository/components/lib
+	
+	Editar y descomentar en el archivo svnserve.conf los siguientes atributos (Solo en nodo manager)
+		
+		cd /svn/repos/DepSyncRep/conf
+		
+		nano svnserve.conf
+			anon-access = none
+			auth-access = write
+			password-db = passwd
+	
+		cd / svn/repos/DepSyncRep/conf
+		nano passwd		
+			wso2svn:wso2svn
+			ismng01:svnIsmng01
+			isnode01:svnIswrk01
+***********************************************************************************	
+
+***********************************************************************************	
+
+Establecer Host en nodo Manager
+	
+	wso2#> nano /opt/wso2/wso2is-5.2.0/repository/conf/carbon.xml	
+		<HostName>srv-is-mgr-qa-01</HostName>
+		<MgtHostName>is.mgmt.org</MgtHostName>
+		
+Establecer Host en nodo Worker 1
+	
+	wso2#> nano /opt/wso2/wso2is-5.2.0/repository/conf/carbon.xml		
+		<HostName>srv-is-qa-01</HostName>
+		<MgtHostName>is.mgmt.org</MgtHostName>
+
+***********************************************************************************		
+	wso2 IS Master
+***********************************************************************************
+
+	<datasource>
+	<name>REGISTRY_LOCAL_DB</name>
+	<description>The datasource used for local registry</description>
+	<jndiConfig>
+		<name>jdbc/WSO2CarbonDB</name>
+	</jndiConfig>
+	<definition type="RDBMS">
+		<configuration>
+			<url>jdbc:mysql://localhost:3306/REGISTRY_LOCAL_DB_121?autoReconnect=true</url>
+			<username>root</username>
+			<password>credisql</password>
+			<driverClassName>com.mysql.jdbc.Driver</driverClassName>
+			<maxActive>50</maxActive>
+			<maxWait>60000</maxWait>
+			<testOnBorrow>true</testOnBorrow>
+			<validationQuery>SELECT 1</validationQuery>
+			<validationInterval>30000</validationInterval>
+			<defaultAutoCommit>true</defaultAutoCommit>
+		</configuration>
+	</definition>
+	</datasource>
+	
+	<datasource>
+	<name>SHARED_REGISTRY_DB_IS</name>
+	<description>The datasource used for registry- config/governance</description>
+	<jndiConfig>
+		<name>jdbc/WSO2RegistryDB</name>
+	</jndiConfig>
+	<definition type="RDBMS">
+		<configuration>
+			<url>jdbc:mysql://localhost:3306/SHARED_REGISTRY_DB_IS?autoReconnect=true</url>
+			<username>wso2db</username>
+			<password>wso2db</password>
+			<driverClassName>com.mysql.jdbc.Driver</driverClassName>
+			<maxActive>50</maxActive>
+			<maxWait>60000</maxWait>
+			<testOnBorrow>true</testOnBorrow>
+			<validationQuery>SELECT 1</validationQuery>
+			<validationInterval>30000</validationInterval>
+			<defaultAutoCommit>true</defaultAutoCommit>
+		</configuration>
+	</definition>
+	</datasource>
+	
+	<datasource>
+	<name>SHARED_USER_DB_IS</name>
+	<description>The datasource used for registry and user manager</description>
+	<jndiConfig>
+		<name>jdbc/WSO2UMDB</name>
+	</jndiConfig>
+	<definition type="RDBMS">
+		<configuration>
+			<url>jdbc:mysql://localhost:3306/SHARED_USER_DB_IS?autoReconnect=true</url>
+			<username>wso2db</username>
+			<password>wso2db</password>
+			<driverClassName>com.mysql.jdbc.Driver</driverClassName>
+			<maxActive>50</maxActive>
+			<maxWait>60000</maxWait>
+			<testOnBorrow>true</testOnBorrow>
+			<validationQuery>SELECT 1</validationQuery>
+			<validationInterval>30000</validationInterval>
+			<defaultAutoCommit>true</defaultAutoCommit>
+		</configuration>
+	</definition>
+	</datasource>
+
+***********************************************************************************
+	wso2 IS Workers
+***********************************************************************************	
+
+	<datasource>
+	<name>REGISTRY_LOCAL_DB</name>
+	<description>The datasource used for local registry</description>
+	<jndiConfig>
+		<name>jdbc/WSO2CarbonDB</name>
+	</jndiConfig>
+	<definition type="RDBMS">
+		<configuration>
+			<url>jdbc:mysql://10.134.4.121:3306/REGISTRY_LOCAL_DB_121?autoReconnect=true</url>
+			<username>root</username>
+			<password>credisql</password>
+			<driverClassName>com.mysql.jdbc.Driver</driverClassName>
+			<maxActive>50</maxActive>
+			<maxWait>60000</maxWait>
+			<testOnBorrow>true</testOnBorrow>
+			<validationQuery>SELECT 1</validationQuery>
+			<validationInterval>30000</validationInterval>
+			<defaultAutoCommit>true</defaultAutoCommit>
+		</configuration>
+	</definition>
+	</datasource>
+	
+	<datasource>
+	<name>SHARED_REGISTRY_DB_IS</name>
+	<description>The datasource used for registry- config/governance</description>
+	<jndiConfig>
+		<name>jdbc/WSO2RegistryDB</name>
+	</jndiConfig>
+	<definition type="RDBMS">
+		<configuration>
+			<url>jdbc:mysql://10.134.4.121:3306/SHARED_REGISTRY_DB_IS?autoReconnect=true</url>
+			<username>root</username>
+			<password>credisql</password>
+			<driverClassName>com.mysql.jdbc.Driver</driverClassName>
+			<maxActive>50</maxActive>
+			<maxWait>60000</maxWait>
+			<testOnBorrow>true</testOnBorrow>
+			<validationQuery>SELECT 1</validationQuery>
+			<validationInterval>30000</validationInterval>
+			<defaultAutoCommit>true</defaultAutoCommit>
+		</configuration>
+	</definition>
+	</datasource>
+	
+	<datasource>
+	<name>SHARED_USER_DB_IS</name>
+	<description>The datasource used for registry and user manager</description>
+	<jndiConfig>
+		<name>jdbc/WSO2UMDB</name>
+	</jndiConfig>
+	<definition type="RDBMS">
+		<configuration>
+			<url>jdbc:mysql://10.134.4.121:3306/SHARED_USER_DB_IS?autoReconnect=true</url>
+			<username>root</username>
+			<password>credisql</password>
+			<driverClassName>com.mysql.jdbc.Driver</driverClassName>
+			<maxActive>50</maxActive>
+			<maxWait>60000</maxWait>
+			<testOnBorrow>true</testOnBorrow>
+			<validationQuery>SELECT 1</validationQuery>
+			<validationInterval>30000</validationInterval>
+			<defaultAutoCommit>true</defaultAutoCommit>
+		</configuration>
+	</definition>
+	</datasource>
+
+***********************************************************************************	
+	Cada nodo del cluster (nano /opt/wso2/wso2as-5.3.0/repository/conf/user-mgt.xml)
+***********************************************************************************		
+	
+	<UserName>sauip</UserName>
+	<Password>admin</Password>
+
+	<Property name="dataSource">jdbc/WSO2UMDB</Property>
+	
+	
+***********************************************************************************
+Establecer DeploymentSynchronizer en nodo Manager
+	wso2:#> nano /opt/wso2/wso2as-5.3.0/repository/conf/carbon.xml
+***********************************************************************************	
+
+<DeploymentSynchronizer>
+	<Enabled>true</Enabled>
+	<AutoCommit>true</AutoCommit>
+	<AutoCheckout>true</AutoCheckout>
+	<RepositoryType>svn</RepositoryType>
+	<SvnUrl>https://10.0.200.34/svn/DepSyncRep/</SvnUrl>	        
+	<SvnUser>ismng01</SvnUser>
+	<SvnPassword>svnIsmng01</SvnPassword>
+	<SvnUrlAppendTenantId>true</SvnUrlAppendTenantId>
+</DeploymentSynchronizer> 
+
+***********************************************************************************
+Establecer DeploymentSynchronizer en nodo Worker1
+wso2:#> nano /opt/wso2/wso2as-5.3.0/repository/conf/carbon.xml
+***********************************************************************************
+
+<DeploymentSynchronizer>
+	<Enabled>true</Enabled>
+	<AutoCommit>false</AutoCommit>
+	<AutoCheckout>true</AutoCheckout>
+	<RepositoryType>svn</RepositoryType>
+	<SvnUrl>https://10.0.200.34/svn/DepSyncRep/</SvnUrl>
+	<SvnUser>isnode01</SvnUser>
+	<SvnPassword>svnIswrk01</SvnPassword>
+	<SvnUrlAppendTenantId>true</SvnUrlAppendTenantId>
+</DeploymentSynchronizer>
+
+***********************************************************************************
+	Establecer registry en nodo Manager
+***********************************************************************************
+
+wso2#> nano /opt/wso2/wso2is-5.2.0/repository/conf/registry.xml
+
+<currentDBConfig>wso2registry</currentDBConfig>
+    <readOnly>false</readOnly>
+    <enableCache>true</enableCache>
+    <registryRoot>/</registryRoot>
+    <dbConfig name="wso2registry">
+        <dataSource>jdbc/WSO2CarbonDB</dataSource>
+    </dbConfig>
+	
+	<dbConfig name="sharedregistry">
+		<dataSource>jdbc/WSO2RegistryDB</dataSource>
+	</dbConfig>
+
+	<remoteInstance url="https://localhost:9443/registry">
+		<id>isregid</id>
+		<dbConfig>sharedregistry</dbConfig>
+		<readOnly>false</readOnly>
+		<enableCache>true</enableCache>
+		<registryRoot>/</registryRoot>
+	<cacheId>wso2db@jdbc:mysql://192.168.1.157:3306/REGISTRY_DB?autoReconnect=true</cacheId>
+	</remoteInstance>
+
+	<mount path="/_system/config" overwrite="true">
+		<instanceId>isregid</instanceId>
+		<targetPath>/_system/isNodes</targetPath>
+	</mount>
+
+	<mount path="/_system/governance" overwrite="true">
+		<instanceId>isregid</instanceId>
+		<targetPath>/_system/governance</targetPath>
+	</mount>
+
+***********************************************************************************	
+	Establecer registry en nodo Worker 1
+***********************************************************************************
+
+	wso2#> nano /opt/wso2/wso2is-5.2.0/repository/conf/registry.xml
+
+	<currentDBConfig>wso2registry</currentDBConfig>
+		<readOnly>false</readOnly>
+		<enableCache>true</enableCache>
+		<registryRoot>/</registryRoot>
+		<dbConfig name="wso2registry">
+			<dataSource>jdbc/WSO2CarbonDB</dataSource>
+		</dbConfig>
+		
+	<dbConfig name="sharedregistry">
+		<dataSource>jdbc/WSO2RegistryDB</dataSource>
+	</dbConfig>
+
+	<remoteInstance url="https://localhost:9443/registry">
+		<id>isregid</id>
+		<dbConfig>sharedregistry</dbConfig>
+		<readOnly>true</readOnly>
+		<enableCache>true</enableCache>
+		<registryRoot>/</registryRoot>
+	<cacheId>wso2db@jdbc:mysql://192.168.1.157:3306/REGISTRY_DB?autoReconnect=true</cacheId>
+	</remoteInstance>
+
+	<mount path="/_system/config" overwrite="true">
+		<instanceId>isregid</instanceId>
+		<targetPath>/_system/isNodes</targetPath>
+	</mount>
+
+	<mount path="/_system/governance" overwrite="true">
+		<instanceId>isregid</instanceId>
+		<targetPath>/_system/governance</targetPath>
+	</mount>
+
+***********************************************************************************
+Establecer cluster en nodo Manager
+	wso2#> nano /opt/wso2/wso2is-5.2.0/repository/conf/axis2/axis2.xml
+***********************************************************************************	
+
+	<clustering class="org.wso2.carbon.core.clustering.hazelcast.HazelcastClusteringAgent" enable="true">
+	<parameter name="membershipScheme">wka</parameter>
+	<parameter name="domain">wso2.is.cluster.org</parameter>
+	<parameter name="localMemberHost">srv-is-mgr-qa-01</parameter>
+	<parameter name="localMemberPort">4100</parameter>
+	<property name="subDomain" value="mgt"/>
+
+	<members>
+		<member>
+			<hostName>srv-is-qa-01</hostName>
+			<port>4100</port>
+		</member>
+	</members>
+
+***********************************************************************************	
+Establecer cluster en nodo Worker 1
+	wso2#> nano /opt/wso2/wso2is-5.2.0/repository/conf/axis2/axis2.xml
+***********************************************************************************	
+
+	<clustering class="org.wso2.carbon.core.clustering.hazelcast.HazelcastClusteringAgent" enable="true">
+	<parameter name="membershipScheme">wka</parameter>
+	<parameter name="domain">wso2.as.cluster.org</parameter>
+	<parameter name="localMemberHost">srv-as-qa-01</parameter>
+	<parameter name="localMemberPort">4100</parameter>
+	<property name="subDomain" value="worker"/>
+
+	<members>
+		<member>
+			<hostName>srv-as-mgr-qa-01</hostName>
+			<port>4100</port>
+		</member>
+	</members>
+
+***********************************************************************************
+Inhabilitar en nodos worker LDAP interno
+***********************************************************************************
+
+wso2:#> nano /opt/wso2/wso2is-5.2.0/repository/conf/identity/embedded-ldap.xml
+
+<Property name="enable">false</Property>
+
+***********************************************************************************
+Editar el archivo user-mgt.xml en cada nodo worker y cambiar ConnectionURL a nodo manager (LDAP embebido)
+***********************************************************************************
+
+wso2:#> nano /opt/wso2/wso2is-5.2.0/repository/conf/user-mgt.xml
+
+<Property name="ConnectionURL">ldap://10.0.200.34:10389</Property>
+
+***********************************************************************************
+Ejecutar primero manager
+***********************************************************************************
+
+wso2#> cd /opt/wso2/wso2is-5.2.0/bin
+wso2#>./wso2server.sh \96Dsetup
+
+* -Dsetup se encarga de crear las base de datos local y compartidas, una vez que se han definido, no ser\E1 necesario ejecutarlo de esta forma.
+
+***********************************************************************************
+Ejecutar luego del setup manager (opci\F3n final de ejecuci\F3n)
+***********************************************************************************
+
+wso2#> cd /opt/wso2/wso2is-5.2.0/bin
+wso2#>./wso2server.sh &
+
+***********************************************************************************
+Ejecutar worker 1 y 2
+***********************************************************************************
+
+wso2#> cd /opt/wso2/wso2is-5.2.0/bin
+wso2#> ./wso2server.sh -Dsetup (solo la primera vez para crear base de datos local)
+wso2#> ./wso2server.sh -DworkerNode=true (luego siempre)

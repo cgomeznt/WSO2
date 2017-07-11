@@ -1,0 +1,7 @@
+Driver de mySQL
+mysql-connector-java-5.1.38-bin.jar
+
+Para armar el cluster
+svnkit-all-1.8.7.wso2v1.jar
+
+trilead-ssh2-1.0.0-build215.jar

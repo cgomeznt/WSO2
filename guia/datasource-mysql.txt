@@ -1,0 +1,21 @@
+<datasource>
+	<name>WSO2_CARBON_DB</name>
+	<description>he datasource used for registry and user manager</description>
+	<jndiConfig>
+		<name>jdbc/WSO2CarbonDB</name>
+	</jndiConfig>
+	<definition type="RDBMS">
+		<configuration>
+			<url>jdbc:mysql://localhost:3306/WSO2CARBON_DB?autoReconnect=true</url>
+			<username>root</username>
+			<password>credisql</password>
+			<driverClassName>com.mysql.jdbc.Driver</driverClassName>
+			<maxActive>50</maxActive>
+			<maxWait>60000</maxWait>
+			<testOnBorrow>true</testOnBorrow>
+			<validationQuery>SELECT 1</validationQuery>
+			<validationInterval>30000</validationInterval>
+			<defaultAutoCommit>true</defaultAutoCommit>
+		</configuration>
+	</definition>
+</datasource>
