@@ -429,11 +429,11 @@ Establecer DeploymentSynchronizer en nodo Manager "/opt/wso2/wso2is-5.1.0/reposi
 		    <SvnUrlAppendTenantId>true</SvnUrlAppendTenantId>
 		</DeploymentSynchronizer>
 
-Establecer DeploymentSynchronizer en nodo Manager "/opt/wso2/wso2is-5.1.0/repository/conf/carbon.xml".::
+Establecer DeploymentSynchronizer en nodo Worker "/opt/wso2/wso2is-5.1.0/repository/conf/carbon.xml".::
 
-$ vi /opt/wso2/wso2is-5.1.0/repository/conf/carbon.xml
+	$ vi /opt/wso2/wso2is-5.1.0/repository/conf/carbon.xml
 		<DeploymentSynchronizer>
-		    <Enabled>true</Enabled>
+		    <Enabled>false</Enabled>
 		    <AutoCommit>false</AutoCommit>
 		    <AutoCheckout>true</AutoCheckout>
 		    <RepositoryType>svn</RepositoryType>
