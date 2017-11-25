@@ -53,9 +53,46 @@ Nos copiamos el Endpoint que el proxy publica y lo consultamos en un navegador o
 
 .. figure:: ../images/esb/11.png
 
+.. figure:: ../images/esb/12.png
+
+
+Tambien podemos crear un Proxy Pass Through
+++++++++++++++++++++++++++++++++++++++++++++
+
+Vamos a crear uno Proxy Pass Through
+
+.. figure:: ../images/esb/13.png
+
+
+.. figure:: ../images/esb/14.png
+
+
+.. figure:: ../images/esb/15.png
+
+
+.. figure:: ../images/esb/16.png
+
+
+Vamos a probarlo en un SoapUI
+
+Buscamos el Endpoint del Proxy
+
+.. figure:: ../images/esb/17.png
+
+Creamos un nuevo proyecto y le suministramos el EndPoint del Proxy creado
+
+.. figure:: ../images/esb/18.png
+
+Realizamos el test
+
+.. figure:: ../images/esb/19.png
 
 
 
 
 
-.. figure:: ../images/esb/05.png
+
+
+
+
+
