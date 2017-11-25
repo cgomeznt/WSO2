@@ -98,13 +98,13 @@ Otorgarmos los permisos unicamente locales para que el Manager pueda poblar su b
 
 Ahora los permisos para mysql acepte conexiones remotas y el worker pueda poblar su base de datos y las compartidas::
 
-	mysql> GRANT ALL PRIVILEGES ON REGISTRY_LOCAL_DB_WORKER.* TO root@'10.134.4.101' identified by 'r00tme' with grant option;
+	mysql> GRANT ALL PRIVILEGES ON REGISTRY_LOCAL_DB_WORKER.* TO root@'10.134.4.102' identified by 'r00tme' with grant option;
 	Query OK, 0 rows affected (0.00 sec)
 
-	mysql> GRANT ALL PRIVILEGES ON SHARED_USER_DB_IS.* TO root@'10.134.4.101' identified by 'r00tme' with grant option;
+	mysql> GRANT ALL PRIVILEGES ON SHARED_USER_DB_IS.* TO root@'10.134.4.102' identified by 'r00tme' with grant option;
 	Query OK, 0 rows affected (0.00 sec)
 
-	mysql> GRANT ALL PRIVILEGES ON SHARED_REGISTRY_DB_IS.* TO root@'10.134.4.101' identified by 'r00tme' with grant option;
+	mysql> GRANT ALL PRIVILEGES ON SHARED_REGISTRY_DB_IS.* TO root@'10.134.4.102' identified by 'r00tme' with grant option;
 	Query OK, 0 rows affected (0.00 sec)
 
 	mysql> 
@@ -409,7 +409,7 @@ En el wso2 IS Worker::
 
 Cada nodo del cluster modificamos (/opt/wso2/wso2is-5.1.0/repository/conf/carbon.xml) para cabiar el usuario admin y para decirle en que BD se almacenaran ahora los usuarios.::
 
-	$ vi /opt/wso2/wso2is-5.1.0/repository/conf/carbon.xml
+	$ vi /opt/wso2/wso2is-5.1.0/repository/conf/user-mgt.xml 
 	   <UserName>useradmin</UserName>
 	   <Password>r00tme</Password>
 
