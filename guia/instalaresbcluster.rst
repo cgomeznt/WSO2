@@ -443,23 +443,29 @@ Configuracion del nodo Manager
 
 1. Descargar y descomprimir el WSO2 ESB, considerar de extraerlo como <PRODUCT_HOME>
 2. Establecer las configuraciones del cluster. Editar el archivo <PRODUCT_HOME>/repository/conf/axis2/axis2.xml.
+
 	a. Habilitar el cluster para los nodos
 	<clustering class="org.wso2.carbon.core.clustering.hazelcast.HazelcastClusteringAgent" enable="true">
+
 	b. Establecer el schema de miembro para el wka que habilitar el registro de las direcciones conocidas (Este nodo envia la inicializacion del cluster a todos los miembros WKA que definiremos luego)
 	<parameter name="membershipScheme">wka</parameter>
+
 	c. Especificar el nombre del cluster que este nodo se unira.
 	<parameter name="domain">wso2.esb.domain</parameter>
+
 	d. Especificar el host que se comunicara con los mensajes del cluster
 	<parameter name="localMemberHost">xxx.xxx.xxx.xx2</parameter>
+
 	e. Especificar el puerto a usar para la comunicacion de los mensajes del cluster. Este puerto no es afectado por la configuracion offset en el archivo <PRODUCT_HOME>/repository/conf/carbon.xml. Si este puerto ya esta asignado a otro server, el cluster automaticamente incrementa este puerto. Como sea, si dos server estan corriendo en la misma maquina, deberia estar seguro que se utilice un unico puerto para cada servidor.
 	<parameter name="localMemberPort">4100</parameter>
+
 	f. Especifique los miembros conocidos. en este ejemplo los miembros conocidos son los nodos worker. El valor del puerto para el WKA del nodo worker debe ser el mismo valor localMemberPort (en este caso 4200).::
 
 	<members>
-		<member>
-		    <hostName>xxx.xxx.xxx.xx3</hostName>
-		    <port>4200</port>
-		</member>
+	  <member>
+		 <hostName>xxx.xxx.xxx.xx3</hostName>
+		  <port>4200</port>
+	  </member>
 	</members>
 
 	g. Cambiar las siguientes propiedades del cluster. Este seguro que el valor del subDomain sea **mgt** para especificar que este es el nodo manager. Esto asegura que el trafico para el nodo manager sea enrutado a este miembro.::
