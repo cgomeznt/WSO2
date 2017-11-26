@@ -82,6 +82,7 @@ El siguiente diagrama ilustra como estas base de datos estan conectadas con el m
 
 Los siguientes topicos nos guiaran por todas las configuraciones necesarias para la configuracion de la base de datos para el cluster.
 - Creando las base de datos
+- Configurar SVN-Based Deployment Synchronizer
 - Configurando el nodo manager
 - Configurando los nodos worker
 - Montando el registro en el manager y los nodos worker
@@ -364,4 +365,218 @@ Additionally, we must specify cacheId, which enables caching to function properl
 You must define a unique name “id” for each remote instance, which is then referred to from mount configurations. In the above example, the unique ID for the remote instance is instanceId. 
 In each of the mounting configurations, we specify the actual mount path and target mount path. The targetPath can be any meaningful name. In this instance, it is /_system/config.
 Now your database is set up.
+
+Configurar SVN-Based Deployment Synchronizer
+++++++++++++++++++++++++++++++++++++++++++++
+
+En esta seccion se describe como configurar el DepSync repository in Subversion (SVN). DepSync puede usar el Subversion instalado en el servidor, esto no es recomendado por WSO2 en produccion. Utilice el SVNKit que describe los pasos a seguir. Ver http://www.if-not-true-then-false.com/2010/install-svn-subversion-server-on-fedora-centos-red-hat-rhel/.
+
+Los siguientes pasos ayuda a configurar el SVN Repository.
+
+1. Descargar e instalar el SVNKit desde http://product-dist.wso2.com/tools/svnkit-all-1.8.7.wso2v1.jar en la carpeta the <PRODUCT_HOME>/repository/components/dropins.
+2. Descargar http://maven.wso2.org/nexus/content/groups/wso2-public/com/trilead/trilead-ssh2/1.0.0-build215/trilead-ssh2-1.0.0-build215.jar  y copiarla en la carpeta <PRODUCT_HOME>/repository/components/lib. Este .jar es necesario para el trabajo de SVNKi
+
+3. En una consola, escribir el siguiente comando para crear el nuevo repositorio:
+svnadmin create <PathToRepository>/<RepoName> 
+
+For example::
+
+	svnadmin create ~/depsyncrepo
+4. Abra <PathToRepository>/<RepoName>/conf/svnserve.conf y configure las siguientes lineas de autenticacion para el nuevo repositorio.
+anon-access = none         (Specifies what kind of access anonymous users have; in this case, none)
+auth-access = write       (Specifies what authenticated users can do; in this case, they can write, which also includes reading) 
+password-db = passwd     (Specifies the source of authentication; in this case, the file named passwd, which resides in the same directory as svnserve.conf)
+5. Abra <PathToRepository>/<RepoName>/conf/passwd y agregue las siguientes lineas en el formato de  <username>:<password>  para agregar un nuevo usuario:
+repouser:repopassword
+
+Despues de crear el repositorio, el siguiente paso es habilitar el DepSync en el manager y los nodos worker.
+
+Habilitando el DepSync en el nodo manager
++++++++++++++++++++++++++++++++++++++++++
+
+Cunfigurar DepSync en el archivo <PRODUCT_HOME>/repository/conf/carbon.xml del nodo manager para aplicar los siguientes cambios en el tag de <DeploymentSynchronizer>:
+
+1. Habilitar la caracteristica DepSync: <Enabled>true</Enabled>
+2. Habilitar el Autocommit para el repositorio local cuando existan cambios en el repositorio central. (Solo se habilita en el nodo manager.): <AutoCommit>true</AutoCommit>
+3. Automaticamente actualizar el repositorio local cuando existan cambios en el repositorio central: <AutoCheckout>true</AutoCheckout>
+4. Especificar el tipo de repositorio (En este caso Subversion): <RepositoryType>svn</RepositoryType>
+5. Especificar donde esta el repositorio y cual es el protocolo de acceso: <SvnUrl><AccessProtocol>://<PathToRepository>/<RepoName>/</SvnUrl>
+6. Especificar el usuario definido en la anterior seccion: <SvnUser>repouser</SvnUser>
+7. Especificar el passwor definio en la anterior seccion: <SvnPassword>repopassword</SvnPassword>
+8. Habilitar la configuracion de tenant-specific si se necesita:<SvnUrlAppendTenantId>true</SvnUrlAppendTenantId>
+
+Al final la configuracion para el nodo management quedaria asi::
+
+	<DeploymentSynchronizer>
+		<Enabled>true</Enabled>
+		<AutoCommit>true</AutoCommit>
+		<AutoCheckout>true</AutoCheckout>
+		<RepositoryType>svn</RepositoryType>
+		<SvnUrl>https://svn.example.com/depsync.repo/</SvnUrl>
+		<SvnUser>repouser</SvnUser>
+		<SvnPassword>repopassword</SvnPassword>
+		<SvnUrlAppendTenantId>true</SvnUrlAppendTenantId>
+	</DeploymentSynchronizer>
+
+Ahora que ya esta completo el nodo manager, vamos con la configuracion en los nodos worker
+
+Habilitando el DepSync en los nodos worker
++++++++++++++++++++++++++++++++++++++++++
+
+Habilite el DepSync en los nodos worker del mismo modo que en el nodo manager, solo con un cambio: setear <AutoCommit>false</AutoCommit>, los nodos worker no manejan los requests.::
+
+	<DeploymentSynchronizer>
+		<Enabled>true</Enabled>
+		<AutoCommit>false</AutoCommit>
+		<AutoCheckout>true</AutoCheckout>
+		<RepositoryType>svn</RepositoryType>
+		<SvnUrl>https://svn.example.com/depsync.repo/</SvnUrl>
+		<SvnUser>repouser</SvnUser>
+		<SvnPassword>repopassword</SvnPassword>
+		<SvnUrlAppendTenantId>true</SvnUrlAppendTenantId>
+	</DeploymentSynchronizer>
+
+Ya tenemos la configuracion de DepSync para el cluster, con esto se asegura que todos los nodos del cluster tengan la misma configuracion.
+
+
+Configuracion del nodo Manager
++++++++++++++++++++++++++++++++
+
+1. Descargar y descomprimir el WSO2 ESB, considerar de extraerlo como <PRODUCT_HOME>
+2. Establecer las configuraciones del cluster. Editar el archivo <PRODUCT_HOME>/repository/conf/axis2/axis2.xml
+	a. Habilitar el cluster para los nodos
+	<clustering class="org.wso2.carbon.core.clustering.hazelcast.HazelcastClusteringAgent" enable="true">
+	b. Establecer el schema de miembro para el wka que habilitar el registro de las direcciones conocidas (Este nodo envia la inicializacion del cluster a todos los miembros WKA que definiremos luego)
+	<parameter name="membershipScheme">wka</parameter>
+	c. Especificar el nombre del cluster que este nodo se unira.
+	<parameter name="domain">wso2.esb.domain</parameter>
+	d. Especificar el host que se comunicara con los mensajes del cluster
+	<parameter name="localMemberHost">xxx.xxx.xxx.xx2</parameter>
+	e. Especificar el puerto a usar para la comunicacion de los mensajes del cluster. Este puerto no es afectado por la configuracion offset en el archivo <PRODUCT_HOME>/repository/conf/carbon.xml. Si este puerto ya esta asignado a otro server, el cluster automaticamente incrementa este puerto. Como sea, si dos server estan corriendo en la misma maquina, deberia estar seguro que se utilice un unico puerto para cada servidor.
+	<parameter name="localMemberPort">4100</parameter>
+	f. Especifique los miembros conocidos. en este ejemplo los miembros conocidos son los nodos worker. El valor del puerto para el WKA del nodo worker debe ser el mismo valor localMemberPort (en este caso 4200).::
+
+	<members>
+		<member>
+		    <hostName>xxx.xxx.xxx.xx3</hostName>
+		    <port>4200</port>
+		</member>
+	</members>
+
+	g. Cambiar las siguientes propiedades del cluster. Este seguro que el valor del subDomain sea **mgt** para especificar que este es el nodo manager. Esto asegura que el trafico para el nodo manager sea enrutado a este miembro.::
+
+	<parameter name="properties">
+		        <property name="backendServerURL" value="https://${hostName}:${httpsPort}/services/"/>
+		        <property name="mgtConsoleURL" value="https://${hostName}:${httpsPort}/"/>
+		        <property name="subDomain" value="mgt"/>
+	</parameter>
+
+3. Configure el hostName, para hacer esto, edite el archivo  <PRODUCT_HOME>/repository/conf/carbon.xm.::
+
+	<HostName>esb.wso2.com</HostName>
+	<MgtHostName>mgt.esb.wso2.com</MgtHostName>
+
+4. Habilitar SVN-based deployment synchronization con la propiedad AutoCommit en true. para hacer esto, edite el archivo <PRODUCT_HOME>/repository/conf/carbon.xml.::
+
+	<DeploymentSynchronizer>
+		<Enabled>true</Enabled>
+		<AutoCommit>true</AutoCommit>
+		<AutoCheckout>true</AutoCheckout>
+		<RepositoryType>svn</RepositoryType>
+		<SvnUrl>https://svn.wso2.org/repos/esb</SvnUrl>
+		<SvnUser>svnuser</SvnUser>
+		<SvnPassword>xxxxxx</SvnPassword>
+		<SvnUrlAppendTenantId>true</SvnUrlAppendTenantId>
+	</DeploymentSynchronizer>
+
+5. En el archivo <PRODUCT_HOME>/repository/conf/carbon.xml se puede especificar el valor del puerto offset. Esto es solo aplicable si tiene multiples productos WSO2 instalados en el servidor ::
+
+	<Ports>
+		...
+		<Offset>0</Offset>
+		...
+	</Ports>
+
+6. Mapear el nombre del host a la IP. Agregue los host en su DNS o en el archivo "/etc/hosts" para todos los nodos.::
+
+	<IP-of-MYSQL-DB-SERVER>   carbondb.mysql-wso2.com
+
+7. Permitir el acceso a la consola del management solo por el balanceador. Configure los puertos del proxy HTTP/HTTPS para la comunicacion entre el load balancer, esto se hace en el archivo <PRODUCT_HOME>/repository/conf/tomcat/catalina-server.xml.::
+
+	<Connector protocol="org.apache.coyote.http11.Http11NioProtocol"
+		port="9763"
+		proxyPort="80"
+		...
+		/>
+	<Connector protocol="org.apache.coyote.http11.Http11NioProtocol"
+		port="9443"
+		proxyPort="443"
+		...
+		/>
+
+Configuracion de los nodos worker
++++++++++++++++++++++++++++++++++
+
+1. Descargar y descomprimir el WSO2 ESB, considerar de extraerlo como <PRODUCT_HOME>
+2. Establecer las configuraciones del cluster. Editar el archivo <PRODUCT_HOME>/repository/conf/axis2/axis2.xml
+	a. Habilitar el cluster para los nodos
+	<clustering class="org.wso2.carbon.core.clustering.hazelcast.HazelcastClusteringAgent" enable="true">
+	b. Establecer el schema de miembro para el wka que habilitar el registro de las direcciones conocidas (Este nodo envia la inicializacion del cluster a todos los miembros WKA que definiremos luego)
+	<parameter name="membershipScheme">wka</parameter>
+	c. Especificar el nombre del cluster que este nodo se unira.
+	<parameter name="domain">wso2.esb.domain</parameter>
+	d. Especificar el host que se comunicara con los mensajes del cluster
+	<parameter name="localMemberHost">xxx.xxx.xxx.xx2</parameter>
+	e. Especificar el puerto a usar para la comunicacion de los mensajes del cluster. Este puerto no es afectado por la configuracion offset en el archivo <PRODUCT_HOME>/repository/conf/carbon.xml. Si este puerto ya esta asignado a otro server, el cluster automaticamente incrementa este puerto. Como sea, si dos server estan corriendo en la misma maquina, deberia estar seguro que se utilice un unico puerto para cada servidor.
+	<parameter name="localMemberPort">4200</parameter>
+	f. Define el sub-domain como worker se agrega bajo la siguiente propiedad parameter name="properties">  element: 
+<property name="subDomain" value="worker"/>
+	g. Especifique los miembros conocidos de sus host name y localMemberPort. Aqui el miembro conocido es el nodo manager, Definiendo el nodo manager es usado y requerido para el Deployment Synchronizer. El Deployment Synchronizer es usado en esta configuracion para identificar el manager y sincronizar los artecfatos entre los distintos nodos del cluster.::
+
+	<members>
+		<member>
+		    <hostName>xxx.xxx.xxx.xx3</hostName>
+		    <port>4100</port>
+		</member>
+	</members>
+
+	h. Descomentar y editar el elemento  WSDLEPRPrefix bajo org.apache.synapse.transport.passthru.PassThroughHttpListener y org.apache.synapse.transport.passthru.PassThroughHttpSSLListener en transportReceiver..::
+
+
+	<parameter name="WSDLEPRPrefix" locked="false">http://esb.wso2.com:80</parameter>
+	 
+	<parameter name="WSDLEPRPrefix" locked="false">https://esb.wso2.com:443</parameter>
+
+3. Configure el hostName, para hacer esto, edite el archivo  <PRODUCT_HOME>/repository/conf/carbon.xm.::
+
+	<HostName>esb.wso2.com</HostName>
+
+4. Habilitar SVN-based deployment synchronization con la propiedad AutoCommit en true. para hacer esto, edite el archivo <PRODUCT_HOME>/repository/conf/carbon.xml.::
+
+
+	<DeploymentSynchronizer>
+		<Enabled>true</Enabled>
+		<AutoCommit>false</AutoCommit>
+		<AutoCheckout>true</AutoCheckout>
+		<RepositoryType>svn</RepositoryType>
+		<SvnUrl>https://svn.wso2.org/repos/esb</SvnUrl>
+		<SvnUser>svnuser</SvnUser>
+		<SvnPassword>xxxxxx</SvnPassword>
+		<SvnUrlAppendTenantId>true</SvnUrlAppendTenantId>
+	</DeploymentSynchronizer>
+
+5. En el archivo <PRODUCT_HOME>/repository/conf/carbon.xml se puede especificar el valor del puerto offset. Esto es solo aplicable si tiene multiples productos WSO2 instalados en el servidor ::
+
+	<Ports>
+		...
+		<Offset>0</Offset>
+		...
+	</Ports>
+
+6. Mapear el nombre del host a la IP. Agregue los host en su DNS o en el archivo "/etc/hosts" para todos los nodos.::
+
+	<IP-of-MYSQL-DB-SERVER>   carbondb.mysql-wso2.com
+
+7. Crear el segundo nodo worker con una copia de este WSO2 y todas las configuraciones y cambiar lo siguiente en el archivo <PRODUCT_HOME>/repository/conf/axis2/axis2.xml, <parameter name="localMemberPort">4300</parameter>
+ 
 
