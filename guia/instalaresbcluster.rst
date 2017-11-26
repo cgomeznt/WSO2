@@ -65,14 +65,18 @@ Puede usar la base de datos H2 para ambientes de desarrollo y como local registr
 Puede crear las siguientes base de datos y asociarlas a los datasources.
 
 +--------------+----------------------------------------------------------------------------------+
-| Database Name  | Description																	  |
+| hola		   | esta bien 																		  |
 +--------------+----------------------------------------------------------------------------------+
-| REGISTRY_DB	 | Shared database for config and governance registry mounts in the product's nodes |
+| cin		   |		no se																      |
 +--------------+----------------------------------------------------------------------------------+
+Database Name	Description
+
+| REGISTRY_DB	 | Shared database for config and governance registry mounts in the product's nodes
+
 | REGISTRY_LOCAL1| Local registry space in the manager node										  |
-+--------------+----------------------------------------------------------------------------------+
+
 | REGISTRY_LOCAL2| Local registry space in the worker node										  |
-+--------------+----------------------------------------------------------------------------------+
+
 | WSO2_USER_DB   | JDBC user store and authorization manager										  |
 +--------------+----------------------------------------------------------------------------------+
 
