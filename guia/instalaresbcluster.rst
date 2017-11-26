@@ -446,20 +446,16 @@ Configuracion del nodo Manager
 
 	a. Habilitar el cluster para los nodos
 	<clustering class="org.wso2.carbon.core.clustering.hazelcast.HazelcastClusteringAgent" enable="true">
-
 	b. Establecer el schema de miembro para el wka que habilitar el registro de las direcciones conocidas (Este nodo envia la inicializacion del cluster a todos los miembros WKA que definiremos luego)
 	<parameter name="membershipScheme">wka</parameter>
-
 	c. Especificar el nombre del cluster que este nodo se unira.
 	<parameter name="domain">wso2.esb.domain</parameter>
-
 	d. Especificar el host que se comunicara con los mensajes del cluster
 	<parameter name="localMemberHost">xxx.xxx.xxx.xx2</parameter>
-
 	e. Especificar el puerto a usar para la comunicacion de los mensajes del cluster. Este puerto no es afectado por la configuracion offset en el archivo <PRODUCT_HOME>/repository/conf/carbon.xml. Si este puerto ya esta asignado a otro server, el cluster automaticamente incrementa este puerto. Como sea, si dos server estan corriendo en la misma maquina, deberia estar seguro que se utilice un unico puerto para cada servidor.
 	<parameter name="localMemberPort">4100</parameter>
-
-	f. Especifique los miembros conocidos. en este ejemplo los miembros conocidos son los nodos worker. El valor del puerto para el WKA del nodo worker debe ser el mismo valor localMemberPort (en este caso 4200).::
+	f. Especifique los miembros conocidos. en este ejemplo los miembros conocidos son los nodos worker. El valor del puerto para el WKA del nodo worker debe ser el mismo valor localMemberPort (en este caso 4200).
+::
 
 	<members>
 	  <member>
