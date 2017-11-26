@@ -1,7 +1,7 @@
 Instalar ESB en Cluster
 ======================
 
-Toda esta informacion es de la pagina oficial de WSO2 para ESB.
+Toda esta informacion es de la pagina oficial de WSO2 para ESB y estamos utilizando WSO2 ESB 4.9.0 
 
 Esta seccion describe como se configura WSO2 ESB worker/manager separados en un cluster. La siguiente seccion le suministra informacion e instrucciones de como configurar el cluster.
 
@@ -375,11 +375,10 @@ Los siguientes pasos ayuda a configurar el SVN Repository.
 
 1. Descargar e instalar el SVNKit desde http://product-dist.wso2.com/tools/svnkit-all-1.8.7.wso2v1.jar en la carpeta the <PRODUCT_HOME>/repository/components/dropins.
 2. Descargar http://maven.wso2.org/nexus/content/groups/wso2-public/com/trilead/trilead-ssh2/1.0.0-build215/trilead-ssh2-1.0.0-build215.jar  y copiarla en la carpeta <PRODUCT_HOME>/repository/components/lib. Este .jar es necesario para el trabajo de SVNKi
-
 3. En una consola, escribir el siguiente comando para crear el nuevo repositorio:
 svnadmin create <PathToRepository>/<RepoName> 
 
-For example::
+Por ejemplo::
 
 	svnadmin create ~/depsyncrepo
 4. Abra <PathToRepository>/<RepoName>/conf/svnserve.conf y configure las siguientes lineas de autenticacion para el nuevo repositorio.
@@ -443,7 +442,7 @@ Configuracion del nodo Manager
 +++++++++++++++++++++++++++++++
 
 1. Descargar y descomprimir el WSO2 ESB, considerar de extraerlo como <PRODUCT_HOME>
-2. Establecer las configuraciones del cluster. Editar el archivo <PRODUCT_HOME>/repository/conf/axis2/axis2.xml
+2. Establecer las configuraciones del cluster. Editar el archivo <PRODUCT_HOME>/repository/conf/axis2/axis2.xml.
 	a. Habilitar el cluster para los nodos
 	<clustering class="org.wso2.carbon.core.clustering.hazelcast.HazelcastClusteringAgent" enable="true">
 	b. Establecer el schema de miembro para el wka que habilitar el registro de las direcciones conocidas (Este nodo envia la inicializacion del cluster a todos los miembros WKA que definiremos luego)
