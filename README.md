@@ -4,6 +4,7 @@
 * [Instalar IS](guia/instalaris.rst) 
 * [Instalar IS en Cluster](guia/instalariscluster.rst) 
 * [Crear con WSO2 ESB un Proxy WSDL](guia/crearproxyesb.rst) 
+* [Instalar ESB en Cluster](guia/instalaresbcluster.rst) 
 
 
 
