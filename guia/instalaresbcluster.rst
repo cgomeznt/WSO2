@@ -7,6 +7,8 @@ Esta seccion describe como se configura WSO2 ESB worker/manager separados en un 
 
 IMPORTANTE: cuando configure productos WSO2 en cluster, es necesario que use una IP en especifico y no localhost o el nombre DNS del Host en las configuraciones. 
 
+No olvides Iptables y SELinux...!!
+
 Worker/manager Separados en cluster
 +++++++++++++++++++++++++++++++++++
 
@@ -91,13 +93,20 @@ Creando las base de datos
 +++++++++++++++++++++++++++
 
 1. Descarga e instalacion de MySQL server.
-2. Descarga del driver MySQL JDBC.
-3. Descomprimir el archivo del driver MySQL JDBC (mysql-connector-java-x.x.xx-bin.jar) y copiarlo dentro del directorio <PRODUCT_HOME>/repository/components/lib en el manager y los nodos worker.
-4. Definir un nombre host para la configuracion de permisos de la base de datos, en le archivo /etc/hosts y agregar la siguiente linea:
-<MYSQL-DB-SERVER-IP> carbondb.mysql-wso2.com
+2. Descarga del driver MySQL JDBC. https://dev.mysql.com/downloads/connector/j/
+3. Descomprimir el archivo del driver MySQL JDBC (mysql-connector-java-x.x.xx-bin.jar) y copiarlo dentro del directorio::
+
+	<PRODUCT_HOME>/repository/components/lib en el manager y los nodos worker.
+
+4. Definir un nombre host para la configuracion de permisos de la base de datos, en le archivo /etc/hosts y agregar la siguiente linea::
+
+	<MYSQL-DB-SERVER-IP> carbondb.mysql-wso2.com
+
 Este paso solo se debe hacer si la base de datos no esta en la maquina local y esta en un servidor separado.
-5. Coloque el siguiente comando en el terminal para acceder a la base de datos:
-mysql -u username -p
+5. Coloque el siguiente comando en el terminal para acceder a la base de datos::
+
+	mysql -u username -p
+
 6. Cuando pregunte la clave, coloque la asignada para dicho usuario.
 7. Cree las base de datos usando los siguientes comandos, donde <PRODUCT_HOME> es el path en donde tiene instalado el producto de WSO2 y el username y password son los mismos utilizados en el paso previo.::
 
