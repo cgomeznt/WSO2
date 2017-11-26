@@ -53,7 +53,7 @@ Mientras este creando las Keys, coloque el nombre del Host (esb.wso2.com or mgt.
 Configurar la Base de Datos
 ++++++++++++++++++++++++++++
 
-Vea la siguiente configuracion_. .. _ ..crearproxyesb.rst 
+Vea la siguiente configuracion_. .. _crearproxyesb.rst: 
 para informacion de como se configura la Base de Datos para el cluster. La configuracion del datasource debe ser realizada en el archivo <PRODUCT_HOME>/repository/conf/datasources/master-datasources.xml para el manager y los nodos worker. Se puede tener configurado una base de datos para el shared registry y sus detalles en el archivo <PRODUCT_HOME>/repository/conf/registry.xml
 
 
