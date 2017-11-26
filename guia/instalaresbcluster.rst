@@ -53,9 +53,26 @@ Mientras este creando las Keys, coloque el nombre del Host (esb.wso2.com or mgt.
 Configurar la Base de Datos
 ++++++++++++++++++++++++++++
 
-Vea la siguiente configuracion_. 
-.. _crearproxyesb.rst: 
-para informacion de como se configura la Base de Datos para el cluster. La configuracion del datasource debe ser realizada en el archivo <PRODUCT_HOME>/repository/conf/datasources/master-datasources.xml para el manager y los nodos worker. Se puede tener configurado una base de datos para el shared registry y sus detalles en el archivo <PRODUCT_HOME>/repository/conf/registry.xml
+La siguiente informacion es de como configura la Base de Datos para el cluster. La configuracion del datasource debe ser realizada en el archivo <PRODUCT_HOME>/repository/conf/datasources/master-datasources.xml para el manager y los nodos worker. Se puede tener configurado una base de datos para el shared registry y sus detalles se deben realizar en el archivo <PRODUCT_HOME>/repository/conf/registry.xml
+
+Cada producto de Carbon-based usa una base de datos para almacenar informacion tal como user management details and registry data. Todos los nodos del cluster usa una base de datos central para la configuracion y registros de gobiernos montados. Asumimos que instalara MySQL como su relational database management system (RDBMS), pero se puede utilizar otra RDBMS que se requiera.
+
+H2 no es recomendada en produccion.
+H2 es la base de datos que viene con WSO2 pero no es recomendada en ambientes de produccion. Tiene muy bajo performance, limitacion de cluster y puede causar fallas en los archivos. Utilice una RDBMS como Oracle, PostgreSQL, MySQL, o MS SQL.
+
+Puede usar la base de datos H2 para ambientes de desarrollo y como local registry en un registry mount.
+
+Puede crear las siguientes base de datos y asociarlas a los datasources.
+
+============= ============
+Database Name Description
+============= ============
+REGISTRY_DB	Shared database for config and governance registry mounts in the product's nodes
+REGISTRY_LOCAL1	Local registry space in the manager node
+REGISTRY_LOCAL2	Local registry space in the worker node
+WSO2_USER_DB
+============= ============
+JDBC user store and authorization manager
 
 
 
