@@ -464,7 +464,9 @@ Configuracion del nodo Manager
 	  </member>
 	</members>
 
-	g. Cambiar las siguientes propiedades del cluster. Este seguro que el valor del subDomain sea **mgt** para especificar que este es el nodo manager. Esto asegura que el trafico para el nodo manager sea enrutado a este miembro.::
+
+	g. Cambiar las siguientes propiedades del cluster. Este seguro que el valor del subDomain sea **mgt** para especificar que este es el nodo manager. Esto asegura que el trafico para el nodo manager sea enrutado a este miembro.
+::
 
 	<parameter name="properties">
 		        <property name="backendServerURL" value="https://${hostName}:${httpsPort}/services/"/>
@@ -502,7 +504,8 @@ Configuracion del nodo Manager
 
 	<IP-of-MYSQL-DB-SERVER>   carbondb.mysql-wso2.com
 
-7. Permitir el acceso a la consola del management solo por el balanceador. Configure los puertos del proxy HTTP/HTTPS para la comunicacion entre el load balancer, esto se hace en el archivo <PRODUCT_HOME>/repository/conf/tomcat/catalina-server.xml.::
+7. Permitir el acceso a la consola del management solo por el balanceador. Configure los puertos del proxy HTTP/HTTPS para la comunicacion entre el load balancer, esto se hace en el archivo <PRODUCT_HOME>/repository/conf/tomcat/catalina-server.xml.
+::
 
 	<Connector protocol="org.apache.coyote.http11.Http11NioProtocol"
 		port="9763"
