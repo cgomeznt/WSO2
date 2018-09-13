@@ -29,7 +29,7 @@ Normalmente, el user-store PRIMARIO en WSO2 Identity Server es un LDAP incrustad
 
 Este es el bloque completo.::
 
-<UserStoreManager class="org.wso2.carbon.user.core.ldap.ReadWriteLDAPUserStoreManager">
+	<UserStoreManager class="org.wso2.carbon.user.core.ldap.ReadWriteLDAPUserStoreManager">
             <Property name="TenantManager">org.wso2.carbon.user.core.tenant.CommonHybridLDAPTenantManager</Property>
             <Property name="ConnectionURL">ldap://localhost:389</Property>
             <Property name="ConnectionName">cn=admin,dc=wso2,dc=com</Property>
