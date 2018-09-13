@@ -3,6 +3,20 @@ Instalar IS en Cluster
 
 Instalamos dos nodos con wso2is. uno de los nodos sera el manager y el otro sera el worker. En el manager vamos a instalar las base de datos (Registro local, usuarios locales , registros compartidos, usuarios compartidos) y el LDAP.
 
+Este manual se ha ejecutado con:
+
+	wso2is-5.2.0
+	mysql-connector-java-5.0.8-bin.jar
+	svnkit-all-1.8.7.wso2v1.jar
+	trilead-ssh2-1.0.0-build215.jar
+
+y tambien con.::
+
+	wso2is-5.6.0
+	mysql-connector-java-5.0.8-bin.jar
+	svnkit-1.3.9.wso2v2.jar
+	trilead-ssh2-1.0.0-build215.jar
+
 No olvides Iptables y SELinux...!!
 
 
@@ -29,7 +43,36 @@ Base de datos que utilizaremos.::
 	SHARED_USER_DB_IS
 	SHARED_REGISTRY_DB_IS
 
-Instalamos mysql-server unicamente en el nodo que sera el manager y creamos las base de datos y le otorgamos los permisos::
+Instalamos mysql-server unicamente en el nodo que sera el manager.::
+
+	# yum -y install mariadb-server mariadb
+
+	# systemctl start mariadb && systemctl enable mariadb && systemctl status mariadb
+
+	# mysql_secure_installation
+
+
+Creamos el usuario wso2 y la estructura de directorios.::
+
+	# groupadd -g 10000 wso2 && groupadd -g 10001 wso2cluster |&& useradd -u 10000 -g wso2 -c "User WSO2 EI" -d /home/wso2 wso2 -p '$6$mTfh/jii$MjvBd3bbCLfu41hmFBqHM1E6WAVDTcUoBmVqkgK.GJxFxbFQ9vasfG4qU43zgYlsXumvZFt4/pZ6/QRjSqSPN/' -m && usermod -aG wso2cluster wso2
+
+Configuramos la variable JAVA_HOME para el usuario wso2.::
+
+	# su - wso2 
+	$ cd
+	$ vi .bash_profile
+	export JAVA_HOME="/usr/java/jdk1.8.0_101"
+	PATH=$PATH:$HOME/.local/bin:$HOME/bin:$JAVA_HOME/bin
+	export PATH
+
+Cargamos en memoria los cambios y verificamos.::
+
+	$ source .bash_profile
+	$ echo $PATH
+	/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/home/wso2/.local/bin:/home/wso2/bin:/home/wso2/.local/bin:/home/wso2/bin:/usr/java/jdk1.8.0_101/bin
+
+
+Creamos el usaurio, las base de datos y le otorgamos los permisos.::
 
 	$ mysql -u root -p
 	Enter password: r00tme
@@ -44,6 +87,16 @@ Instalamos mysql-server unicamente en el nodo que sera el manager y creamos las 
 	owners.
 
 	Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+	MariaDB [(none)]> CREATE USER 'userwso2is'@'localhost' IDENTIFIED BY 'r00tme';
+	Query OK, 0 rows affected (0.00 sec)
+
+	mysql> GRANT ALL PRIVILEGES ON * . * TO 'userwso2is'@'localhost';
+	Query OK, 0 rows affected (0.00 sec)
+
+	mysql> FLUSH PRIVILEGES;
+	Query OK, 0 rows affected (0.00 sec)
+
 
 	mysql> show databases;
 	+--------------------+
@@ -85,26 +138,26 @@ Instalamos mysql-server unicamente en el nodo que sera el manager y creamos las 
 
 Otorgarmos los permisos unicamente locales para que el Manager pueda poblar su base de datos::
 
-	mysql> GRANT ALL PRIVILEGES ON REGISTRY_LOCAL_DB_MANAGER.* TO root@'%' with grant option;
+	mysql> GRANT ALL PRIVILEGES ON REGISTRY_LOCAL_DB_MANAGER.* TO userwso2is@'%' with grant option;
 	Query OK, 0 rows affected (0.00 sec)
 
-	mysql> GRANT ALL PRIVILEGES ON SHARED_USER_DB_IS.* TO root@'%' with grant option;
+	mysql> GRANT ALL PRIVILEGES ON SHARED_USER_DB_IS.* TO userwso2is@'%' with grant option;
 	Query OK, 0 rows affected (0.00 sec)
 
-	mysql> GRANT ALL PRIVILEGES ON SHARED_REGISTRY_DB_IS.* TO root@'%' with grant option;
+	mysql> GRANT ALL PRIVILEGES ON SHARED_REGISTRY_DB_IS.* TO userwso2is@'%' with grant option;
 	Query OK, 0 rows affected (0.00 sec)
 
 	mysql> 
 
 Ahora los permisos para mysql acepte conexiones remotas y el worker pueda poblar su base de datos y las compartidas::
 
-	mysql> GRANT ALL PRIVILEGES ON REGISTRY_LOCAL_DB_WORKER.* TO root@'10.134.4.102' identified by 'r00tme' with grant option;
+	mysql> GRANT ALL PRIVILEGES ON REGISTRY_LOCAL_DB_WORKER.* TO userwso2is@'10.134.4.102' identified by 'r00tme' with grant option;
 	Query OK, 0 rows affected (0.00 sec)
 
-	mysql> GRANT ALL PRIVILEGES ON SHARED_USER_DB_IS.* TO root@'10.134.4.102' identified by 'r00tme' with grant option;
+	mysql> GRANT ALL PRIVILEGES ON SHARED_USER_DB_IS.* TO userwso2is@'10.134.4.102' identified by 'r00tme' with grant option;
 	Query OK, 0 rows affected (0.00 sec)
 
-	mysql> GRANT ALL PRIVILEGES ON SHARED_REGISTRY_DB_IS.* TO root@'10.134.4.102' identified by 'r00tme' with grant option;
+	mysql> GRANT ALL PRIVILEGES ON SHARED_REGISTRY_DB_IS.* TO userwso2is@'10.134.4.102' identified by 'r00tme' with grant option;
 	Query OK, 0 rows affected (0.00 sec)
 
 	mysql> 
@@ -239,10 +292,16 @@ Editar y descomentar en el archivo svnserve.conf los siguientes atributos (Solo 
 	  password-db = passwd
 	
 
-	# vi /opt/svn/repos/DepSyncRep/conf/svnserve.conf/passwd		
+	# vi /opt/svn/repos/DepSyncRep/conf/passwd		
 	  wso2svn:wso2svn
 	  ismng01:svnIsmng01
 	  isnode01:svnIswrk01
+
+NO olvidemos los permisos.::
+
+	# chown -R /opt/svn	
+	# chown -R /opt/wso2
+
 
 Procedemos a realizar las configuraciones para el Cluster.
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -563,6 +622,10 @@ Editar el archivo user-mgt.xml en cada nodo Worker y cambiar ConnectionURL a nod
 
 		<Property name="ConnectionURL">ldap://srv-is-manager-01:10389</Property>
 
-Ejecutar luego del setup manager (opci\F3n final de ejecuci\F3n).::
+Ejecutar luego del setup manager .::
 
-$ /opt/wso2/wso2is-5.1.0/bin/wso2server.sh -Dsetup
+	$ /opt/wso2/wso2is-5.1.0/bin/wso2server.sh -Dsetup
+
+Ejecutar luego del setup en el Worker (opción final de ejecución).::
+
+	$ /opt/wso2/wso2is-5.1.0/bin/wso2server.sh -Dsetup

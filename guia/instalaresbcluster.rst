@@ -167,6 +167,20 @@ Creando las base de datos
 
 	Thanks for using MySQL!
 
+::
+
+	vi /etc/my.cnf
+
+	[mysqld]
+	datadir=/var/lib/mysql
+	socket=/var/lib/mysql/mysql.sock
+	user=mysql
+	# Disabling symbolic-links is recommended to prevent assorted security risks
+	symbolic-links=0
+	bind-address=0.0.0.0
+
+Recuerde si es necesario otorgar los permisos de conexion remota al MySQL.
+
 
 2. Descarga del driver MySQL JDBC. https://dev.mysql.com/downloads/connector/j/
 3. Descomprimir el archivo del driver MySQL JDBC (mysql-connector-java-x.x.xx-bin.jar) y copiarlo dentro del directorio:
