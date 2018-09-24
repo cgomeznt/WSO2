@@ -6,6 +6,7 @@
 * [Configurar OpenLDAP with WSO2 Identity Server](guia/configurarOLWSO2IS.rst) 
 * [Crear con WSO2 ESB un Proxy WSDL](guia/crearproxyesb.rst) 
 * [Instalar ESB en Cluster](guia/instalaresbcluster.rst) 
+* [Crear un systemd con watchdog - respawn](guia/systemdrespawn.rst) 
 
 
 
